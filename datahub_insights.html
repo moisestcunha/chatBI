@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataHub Insights</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f1117;color:#e2e8f0;padding:20px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.metric{background:#1a1d27;border-radius:10px;padding:16px;border:1px solid #2d3148}
+.metric-label{font-size:12px;color:#8892a4;margin-bottom:8px}
+.metric-value{font-size:24px;font-weight:600;color:#e2e8f0}
+.metric-value.danger{color:#fc8181}
+.section{margin-bottom:24px}
+.section-title{font-size:12px;font-weight:600;color:#8892a4;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.section-title i{font-size:14px}
+.alert{background:rgba(252,129,129,0.1);border:1px solid rgba(252,129,129,0.3);border-radius:8px;padding:12px 16px;margin-bottom:20px;display:flex;gap:10px;align-items:flex-start}
+.alert i{color:#fc8181;font-size:18px;margin-top:1px;flex-shrink:0}
+.alert p{font-size:13px;color:#fc8181;line-height:1.5}
+.chart-wrap{position:relative;width:100%}
+.tabs{display:flex;gap:4px;margin-bottom:16px}
+.tab{padding:6px 16px;font-size:13px;cursor:pointer;background:transparent;border:1px solid #2d3148;border-radius:6px;color:#8892a4;transition:all .15s}
+.tab.active{background:#1a1d27;color:#e2e8f0;border-color:#4a5180}
+.tag-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.tag{font-size:11px;padding:4px 10px;border-radius:20px;border:1px solid #2d3148;color:#8892a4}
+.tag.danger{background:rgba(252,129,129,0.1);color:#fc8181;border-color:rgba(252,129,129,0.3)}
+.tag.warn{background:rgba(251,191,36,0.1);color:#fbbf24;border-color:rgba(251,191,36,0.3)}
+.tag.success{background:rgba(29,158,117,0.1);color:#1D9E75;border-color:rgba(29,158,117,0.3)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:8px 12px;text-align:left;color:#8892a4;font-weight:500;border-bottom:1px solid #2d3148;white-space:nowrap}
+tbody tr:hover{background:#1a1d27}
+tbody td{padding:9px 12px;border-bottom:1px solid #1a1d27;color:#e2e8f0}
+.bar-wrap{display:flex;align-items:center;gap:8px}
+.bar{height:6px;border-radius:3px;min-width:2px}
+.rank{font-size:12px;color:#4a5180;width:20px}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div class="metrics">
+  <div class="metric"><div class="metric-label">Total de acessos</div><div class="metric-value">630.229</div></div>
+  <div class="metric"><div class="metric-label">Usuários distintos</div><div class="metric-value">164</div></div>
+  <div class="metric"><div class="metric-label">Relatórios ativos</div><div class="metric-value">96</div></div>
+  <div class="metric"><div class="metric-label">Taxa de erro geral</div><div class="metric-value danger">12%</div></div>
+</div>
+
+<div class="alert">
+  <i class="ti ti-alert-triangle"></i>
+  <p>75.905 execuções com erro no período (jan–mar/2026). BI Integradores (16,6%), PROPOSTA (19%), EMBUDO (54%) e Dashboard CEO (52%) precisam de revisão urgente.</p>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="ti ti-chart-bar"></i> Top 10 relatórios mais acessados</div>
+  <div class="chart-wrap" style="height:300px"><canvas id="topChart"></canvas></div>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="ti ti-chart-bar-off"></i> 10 relatórios menos acessados</div>
+  <div class="chart-wrap" style="height:300px"><canvas id="botChart"></canvas></div>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="ti ti-alert-circle"></i> Maiores taxas de erro</div>
+  <div class="chart-wrap" style="height:300px"><canvas id="errChart"></canvas></div>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="ti ti-clock"></i> Relatórios mais lentos (tempo médio)</div>
+  <div class="chart-wrap" style="height:260px"><canvas id="slowChart"></canvas></div>
+</div>
+
+<div class="section">
+  <div class="section-title"><i class="ti ti-users"></i> Ranking de usuários</div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('mais')">Mais ativos</button>
+    <button class="tab" onclick="showTab('menos')">Menos ativos</button>
+  </div>
+  <div id="tab-mais">
+    <table>
+      <thead><tr><th>#</th><th>Usuário</th><th>Acessos</th><th>Relatórios</th><th>Tempo total</th><th>Erros</th></tr></thead>
+      <tbody id="tbody-mais"></tbody>
+    </table>
+  </div>
+  <div id="tab-menos" class="hidden">
+    <table>
+      <thead><tr><th>#</th><th>Usuário</th><th>Acessos</th><th>Relatórios</th><th>Status</th></tr></thead>
+      <tbody id="tbody-menos"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="tag-wrap">
+  <span class="tag success"><i class="ti ti-check"></i> BI COMERCIAL — campeão (69.638 acessos)</span>
+  <span class="tag success"><i class="ti ti-users"></i> BACKLOG — maior base (128 usuários)</span>
+  <span class="tag warn"><i class="ti ti-clock"></i> Estoque Gerencial — 6,8 min de carregamento</span>
+  <span class="tag danger"><i class="ti ti-alert-circle"></i> EMBUDO — 54% de erros</span>
+  <span class="tag danger"><i class="ti ti-alert-circle"></i> Dashboard CEO — 52% de erros</span>
+  <span class="tag"><i class="ti ti-trash"></i> 6 relatórios com apenas 1 acesso no período</span>
+</div>
+
+<script>
+const gc = '#2d3148', tc = '#8892a4';
+
+const baseOpts = () => ({
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}},
+  scales:{
+    x:{ticks:{color:tc,font:{size:11}},grid:{color:gc}},
+    y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}}
+  }
+});
+
+new Chart(document.getElementById('topChart'),{
+  type:'bar',
+  data:{
+    labels:['BI COMERCIAL','ACOMP. PEDIDO','Pipeline Propostas','BI Integradores','BI S-OP','BI Inadimplência','CARTEIRA','Dash Produtos','BACKLOG','PROPOSTA'],
+    datasets:[{data:[69638,48158,40981,39527,30270,27495,26778,25586,25580,23306],backgroundColor:'#1D9E75',borderRadius:4}]
+  },
+  options:{...baseOpts(),indexAxis:'y',scales:{x:{ticks:{color:tc,font:{size:11},callback:v=>v>=1000?(v/1000).toFixed(0)+'k':v},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}
+});
+
+new Chart(document.getElementById('botChart'),{
+  type:'bar',
+  data:{
+    labels:['Vendas c/ Verticais','Cadastro Produtos','POS - HANWHA','Títulos Originais','Cli. Fat. Completo','Vendas Colombia','Vendas p/ Fabricante','Listagem Vendas PG2','POS - LOGITECH','S.OP - Mat. Prima'],
+    datasets:[{data:[1,1,1,1,1,1,2,2,2,2],backgroundColor:'#4a5180',borderRadius:4}]
+  },
+  options:{...baseOpts(),indexAxis:'y'}
+});
+
+new Chart(document.getElementById('errChart'),{
+  type:'bar',
+  data:{
+    labels:['Cli. Fat. Completo','Est. Gerencial Total','Vendas E-Commerce','EMBUDO','Dashboard CEO','Pipeline Ventas','PROPUESTA','Produtiv. ADM','Dash Prod. Diretores','USO DATAHUB'],
+    datasets:[{data:[100,100,100,55,52,51,49,45,44,41],backgroundColor:'#fc8181',borderRadius:4}]
+  },
+  options:{...baseOpts(),indexAxis:'y',scales:{x:{ticks:{color:tc,font:{size:11},callback:v=>v+'%'},grid:{color:gc},max:110},y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}
+});
+
+new Chart(document.getElementById('slowChart'),{
+  type:'bar',
+  data:{
+    labels:['Est. Gerencial Total','Cadastro Produtos','PROPUESTA','BI S-OP','BI COMERCIAL','BI Integradores','CARTEIRA','Acomp. Pedido','BI Inadimplência','Pipeline Propostas'],
+    datasets:[{data:[6.82,1.03,0.23,0.18,0.15,0.15,0.12,0.11,0.10,0.09],backgroundColor:'#fbbf24',borderRadius:4}]
+  },
+  options:{...baseOpts(),indexAxis:'y',scales:{x:{ticks:{color:tc,font:{size:11},callback:v=>v.toFixed(2)+'min'},grid:{color:gc}},y:{ticks:{color:tc,font:{size:11}},grid:{color:gc}}}}
+});
+
+const mais=[
+  {u:'andre.afonso',a:8233,r:13,t:61.6,e:0},
+  {u:'nielson.melo',a:7614,r:10,t:74.1,e:0},
+  {u:'moises.tcunha',a:6960,r:78,t:118.1,e:22},
+  {u:'frederico.safranek',a:6487,r:18,t:69.7,e:0},
+  {u:'lucas.odilon',a:5441,r:6,t:41.2,e:0},
+  {u:'marcos.feitosa',a:5355,r:8,t:47.5,e:0},
+  {u:'marcel.fernandes',a:5279,r:23,t:41.5,e:12},
+  {u:'antonia.silva',a:4770,r:9,t:44.4,e:0},
+  {u:'nicole.ramos',a:4419,r:18,t:42.9,e:0},
+  {u:'gustavo.barraboni',a:3600,r:19,t:48.3,e:0},
+];
+const menos=[
+  {u:'marcio.mello',a:2,r:1},{u:'beatriz.santos',a:2,r:1},
+  {u:'erika.costa',a:3,r:1},{u:'douglas.soares',a:4,r:1},
+  {u:'wellington.lima',a:6,r:1},{u:'michelle.silva',a:8,r:1},
+  {u:'lucas.barroso',a:11,r:2},{u:'paola.rodriguez',a:11,r:2},
+  {u:'caio.albuquerque',a:12,r:4},{u:'mayra.lira',a:12,r:1},
+];
+const maxA=Math.max(...mais.map(d=>d.a));
+
+document.getElementById('tbody-mais').innerHTML=mais.map((d,i)=>`
+  <tr>
+    <td class="rank">${i+1}</td>
+    <td style="font-weight:500">${d.u}</td>
+    <td><div class="bar-wrap"><div class="bar" style="width:${Math.round(d.a/maxA*100)}px;background:#1D9E75"></div><span>${d.a.toLocaleString('pt-BR')}</span></div></td>
+    <td>${d.r} BIs</td>
+    <td>${d.t.toFixed(1)} min</td>
+    <td>${d.e>0?`<span style="color:#fc8181;font-size:12px">${d.e} erros</span>`:'<span style="color:#4a5180">—</span>'}</td>
+  </tr>`).join('');
+
+document.getElementById('tbody-menos').innerHTML=menos.map((d,i)=>`
+  <tr>
+    <td class="rank">${i+1}</td>
+    <td style="font-weight:500">${d.u}</td>
+    <td>${d.a}</td>
+    <td>${d.r} BI</td>
+    <td>${d.a<=5?'<span style="color:#fbbf24;font-size:12px">possível inativo</span>':'<span style="color:#1D9E75;font-size:12px">ok</span>'}</td>
+  </tr>`).join('');
+
+function showTab(tab){
+  document.getElementById('tab-mais').classList.toggle('hidden',tab!=='mais');
+  document.getElementById('tab-menos').classList.toggle('hidden',tab!=='menos');
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',(i===0&&tab==='mais')||(i===1&&tab==='menos')));
+}
+</script>
+</body>
+</html>
